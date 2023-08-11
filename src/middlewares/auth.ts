@@ -1,0 +1,24 @@
+import { redisService } from '@/lib/redis.service';
+import { UserModel } from '@/modules/users/users.schema';
+import { UnauthorizedException } from '@/utils/exceptions';
+import { Context, Next } from 'hono';
+import jwt from 'jsonwebtoken';
+
+export const auth = async (c: Context, next: Next) => {
+  const authHeader = c.req.headers.get('Authorization');
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) {
+    throw new UnauthorizedException('Unauthorized');
+  }
+  const jwtObject = jwt.decode(token) as { userId: string };
+  const userID = jwtObject?.userId;
+  const jwtSecret = await redisService.get(`jwt-secret:${userID}`);
+  try {
+    const data = jwt.verify(token, jwtSecret) as { userId: string };
+    const user = await UserModel.findById(data.userId);
+    c.set('user', user);
+    await next();
+  } catch (error) {
+    throw new UnauthorizedException('Unauthorized');
+  }
+};

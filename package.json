@@ -1,0 +1,45 @@
+{
+  "name": "safelet-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc && tsc-alias",
+    "start": "node public/index.js",
+    "build:watch": "(concurrently \"tsc -w\" \"tsc-alias -w\")",
+    "dev": "npm run build:watch & node --watch public/index.js"
+  },
+  "keywords": [],
+  "author": "Son Tran",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.388.0",
+    "@aws-sdk/s3-request-presigner": "^3.388.0",
+    "@hono/node-server": "^1.1.1",
+    "@hono/zod-validator": "^0.1.5",
+    "@smithy/hash-stream-node": "^2.0.2",
+    "@types/multer": "^1.4.7",
+    "bcrypt": "^5.1.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "hono": "^3.4.1",
+    "ioredis": "^5.3.2",
+    "jsonwebtoken": "^9.0.1",
+    "mongodb": "^5.7.0",
+    "mongoose": "^7.4.2",
+    "multer": "1.4.5-lts.1",
+    "nodemailer": "^6.9.4",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^8.0.2",
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/node": "^20.4.9",
+    "@types/nodemailer": "^6.4.9",
+    "concurrently": "^8.2.0",
+    "tsc-alias": "^1.8.7",
+    "typescript": "^5.1.6"
+  }
+}
