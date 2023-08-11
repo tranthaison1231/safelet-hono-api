@@ -1,6 +1,6 @@
 import { redisService } from '@/lib/redis.service';
-import { UserModel } from '@/modules/users/users.schema';
 import { UnauthorizedException } from '@/utils/exceptions';
+import prisma from '@/utils/prisma';
 import { Context, Next } from 'hono';
 import jwt from 'jsonwebtoken';
 
@@ -15,7 +15,11 @@ export const auth = async (c: Context, next: Next) => {
   const jwtSecret = await redisService.get(`jwt-secret:${userID}`);
   try {
     const data = jwt.verify(token, jwtSecret) as { userId: string };
-    const user = await UserModel.findById(data.userId);
+    const user = await prisma.users.findUnique({
+      where: {
+        id: data.userId,
+      },
+    });
     c.set('user', user);
     await next();
   } catch (error) {

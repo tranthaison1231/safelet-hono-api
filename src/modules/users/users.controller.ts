@@ -29,3 +29,23 @@ users.get(
     return c.json(data, 200);
   }
 );
+
+users.delete('/:id', auth, async (c) => {
+  const id = c.req.param('id');
+  const data = await UserService.delete(id);
+  return c.json(data, 200);
+});
+
+users.get('/:id', auth, async (c) => {
+  const id = c.req.param('id');
+  const data = await UserService.getBy(id);
+  if (!data) {
+    return c.json(
+      {
+        message: 'User not found',
+      },
+      404
+    );
+  }
+  return c.json(data, 200);
+});

@@ -3,10 +3,11 @@ import { redisService } from '@/lib/redis.service';
 import { CLIENT_URL } from '@/utils/constants';
 import { NotFoundException, UnauthorizedException } from '@/utils/exceptions';
 import { comparePassword, hashPassword } from '@/utils/password';
+import prisma, { PrismaModels } from '@/utils/prisma';
 import { generateOpaqueToken } from '@/utils/token';
+import { uuid } from '@/utils/uuid';
 import * as bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { User, UserDocument, UserModel } from '../users/users.schema';
 import {
   ChangePasswordDto,
   ForgotPasswordDto,
@@ -15,22 +16,34 @@ import {
   SignUpDto,
   UpdateProfileDto,
 } from './dto/auth-payload.dto';
-import { uuid } from '@/utils/uuid';
 
 export const ACCESS_TOKEN_EXPIRE_IN = 60;
 export const REFRESH_TOKEN_EXPIRE_IN = 60 * 60 * 24 * 30;
 
 export class AuthService {
   static async signUp(signUpDto: SignUpDto) {
-    const body: Partial<User> = signUpDto;
-    const user = await UserModel.findOne({ email: signUpDto.email }).exec();
+    const body: Partial<PrismaModels['users']> = signUpDto;
+    const user = await prisma.users.findUnique({
+      where: {
+        email: signUpDto.email,
+      },
+    });
     if (user) throw new UnauthorizedException('Email already exists');
     const salt = bcrypt.genSaltSync(10);
     body.password = await hashPassword(signUpDto.password, salt);
     body.salt = salt;
 
-    const newUser = await UserModel.create(body);
-    const token = await this.createToken({ userId: newUser._id.toString() });
+    const newUser = await prisma.users.create({
+      data: {
+        firstName: signUpDto.firstName,
+        lastName: signUpDto.lastName,
+        email: signUpDto.email,
+        phoneNumber: signUpDto.phoneNumber,
+        password: body.password,
+        salt: body.salt,
+      },
+    });
+    const token = await this.createToken({ userId: newUser.id });
     const code = uuid();
     await this.sendEmailVerification({
       email: newUser.email,
@@ -40,11 +53,11 @@ export class AuthService {
     return newUser;
   }
 
-  static async verifyEmail(user: UserDocument) {
+  static async verifyEmail(user: PrismaModels['users']) {
     try {
-      const token = await this.createToken({ userId: user._id.toString() });
+      const token = await this.createToken({ userId: user.id.toString() });
       const code = uuid();
-      await redisService.set(`verify-email:${user._id}`, code, 'EX', 60 * 60 * 24);
+      await redisService.set(`verify-email:${user.id}`, code, 'EX', 60 * 60 * 24);
       await this.sendEmailVerification({ email: user.email, token, code });
     } catch (error) {
       console.error(error);
@@ -52,13 +65,19 @@ export class AuthService {
     }
   }
 
-  static async confirmEmail(user: UserDocument, code: string) {
+  static async confirmEmail(user: PrismaModels['users'], code: string) {
     try {
-      const redisCode = await redisService.get(`verify-email:${user._id}`);
+      const redisCode = await redisService.get(`verify-email:${user.id}`);
       if (redisCode !== code) throw new UnauthorizedException('Invalid code');
-      user.isVerified = true;
-      redisService.del(`verify-email:${user._id}`);
-      await user.save();
+      redisService.del(`verify-email:${user.id}`);
+      await prisma.users.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          isVerified: true,
+        },
+      });
     } catch (error) {
       console.error(error);
       throw error;
@@ -94,28 +113,36 @@ export class AuthService {
   }
 
   static async signIn({ email, password }: SignInDto) {
-    const user = await UserModel.findOne({ email: email }).exec();
+    const user = await prisma.users.findUnique({
+      where: {
+        email: email,
+      },
+    });
     if (!user) throw new NotFoundException('User not found');
     const isMatch = await comparePassword(password, user.password);
     if (!isMatch) throw new UnauthorizedException('Password does not match');
-    const accessToken = await this.createToken({ userId: user._id.toString() });
-    const refreshToken = await this.createRefreshToken({ userId: user._id.toString() });
+    const accessToken = await this.createToken({ userId: user.id });
+    const refreshToken = await this.createRefreshToken({ userId: user.id });
     return { accessToken, refreshToken, expiresIn: ACCESS_TOKEN_EXPIRE_IN };
   }
 
   static async refreshToken(refreshToken: string, userID: string) {
     const redisRefreshToken = await redisService.get(`refresh-token:${userID}`);
     if (redisRefreshToken !== refreshToken) throw new UnauthorizedException('Invalid refresh token');
-    const accessToken = await this.createToken({ userId: userID.toString() });
-    const newRefreshToken = await this.createRefreshToken({ userId: userID.toString() });
+    const accessToken = await this.createToken({ userId: userID });
+    const newRefreshToken = await this.createRefreshToken({ userId: userID });
     return { accessToken, refreshToken: newRefreshToken, expiresIn: ACCESS_TOKEN_EXPIRE_IN };
   }
 
   static async forgotPassword({ email }: ForgotPasswordDto) {
     try {
-      const user = await UserModel.findOne({ email: email }).exec();
+      const user = await prisma.users.findUnique({
+        where: {
+          email: email,
+        },
+      });
       if (!user) throw new NotFoundException('User not found');
-      const token = await this.createToken({ userId: user._id.toString() });
+      const token = await this.createToken({ userId: user.id });
       await mailService.sendMail({
         to: user.email,
         subject: 'Reset Password',
@@ -127,41 +154,57 @@ export class AuthService {
     }
   }
 
-  static async resetPassword({ password }: ResetPasswordDto, user: UserDocument) {
+  static async resetPassword({ password }: ResetPasswordDto, user: PrismaModels['users']) {
     try {
-      user.password = await hashPassword(password, user.salt);
-      await user.save();
+      const newPassword = await hashPassword(password, user.salt);
+      await prisma.users.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          password: newPassword,
+        },
+      });
     } catch (error) {
       console.error(error);
       throw error;
     }
   }
 
-  static changePassword({ newPassword, password }: ChangePasswordDto, user: UserDocument) {
+  static async changePassword({ newPassword, password }: ChangePasswordDto, user: PrismaModels['users']) {
     try {
       const isMatch = comparePassword(password, user.password);
       if (!isMatch) throw new UnauthorizedException('Password does not match');
       if (user.password === newPassword)
         throw new UnauthorizedException('New password must be different from old password');
-      user.password = newPassword;
-      return user.save();
+      await prisma.users.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          password: newPassword,
+        },
+      });
     } catch (error) {
       console.error(error);
       throw error;
     }
   }
 
-  static logout(user: UserDocument) {
+  static logout(user: PrismaModels['users']) {
     try {
-      redisService.del(`jwt-secret:${user._id}`);
-      redisService.del(`refresh-token:${user._id}`);
+      redisService.del(`jwt-secret:${user.id}`);
+      redisService.del(`refresh-token:${user.id}`);
     } catch (error) {
       console.error(error);
       throw error;
     }
   }
 
-  static async updateProfile({ firstName, lastName, phoneNumber, avatarURL }: UpdateProfileDto, user: UserDocument) {
+  static async updateProfile(
+    { firstName, lastName, phoneNumber, avatarURL }: UpdateProfileDto,
+    user: PrismaModels['users']
+  ) {
     try {
       if (firstName) {
         user.firstName = firstName;
@@ -175,7 +218,17 @@ export class AuthService {
       if (avatarURL) {
         user.avatarURL = avatarURL;
       }
-      return await user.save();
+      await prisma.users.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phoneNumber: user.phoneNumber,
+          avatarURL: user.avatarURL,
+        },
+      });
     } catch (error) {
       console.error(error);
       throw error;

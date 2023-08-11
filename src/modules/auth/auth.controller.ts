@@ -2,7 +2,6 @@ import { auth } from '@/middlewares/auth';
 import { zValidator } from '@hono/zod-validator';
 import { Context, Hono } from 'hono';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
-import { UserDocument } from '../users/users.schema';
 import { AuthService, REFRESH_TOKEN_EXPIRE_IN } from './auth.service';
 import {
   changePasswordDto,
@@ -15,6 +14,7 @@ import {
 } from './dto/auth-payload.dto';
 import { UnauthorizedException } from '@/utils/exceptions';
 import jwt from 'jsonwebtoken';
+import { PrismaModels } from '@/utils/prisma';
 
 export const router = new Hono();
 
@@ -40,7 +40,7 @@ router
     );
   })
   .put('/verify-email', auth, async (c) => {
-    const user = c.get('user') as UserDocument;
+    const user = c.get('user') as PrismaModels['users'];
     await AuthService.verifyEmail(user);
     return c.json(
       {
@@ -62,7 +62,7 @@ router
     return c.json(data, 200);
   })
   .put('/confirm-email', auth, zValidator('json', confirmEmailDto), async (c) => {
-    const user = c.get('user') as UserDocument;
+    const user = c.get('user') as PrismaModels['users'];
     const body = c.req.valid('json');
     await AuthService.confirmEmail(user, body.code);
     c.json(
@@ -73,7 +73,7 @@ router
     );
   })
   .put('/verify-email', auth, async (c) => {
-    const user = c.get('user') as UserDocument;
+    const user = c.get('user') as PrismaModels['users'];
     await AuthService.verifyEmail(user);
     c.json(
       {
@@ -83,7 +83,7 @@ router
     );
   })
   .post('/reset-password', auth, zValidator('json', resetPasswordDto), async (c) => {
-    const user = c.get('user') as UserDocument;
+    const user = c.get('user') as PrismaModels['users'];
     const body = c.req.valid('json');
     await AuthService.resetPassword(body, user);
     return c.json(
@@ -94,11 +94,11 @@ router
     );
   })
   .get('/profile', auth, async (c) => {
-    const user = c.get('user') as UserDocument;
+    const user = c.get('user');
     c.json({ user: user }, 200);
   })
   .put('/profile', auth, zValidator('json', updateProfileDto), async (c) => {
-    const user = c.get('user') as UserDocument;
+    const user = c.get('user') as PrismaModels['users'];
     const body = c.req.valid('json');
     const updatedUser = await AuthService.updateProfile(body, user);
     c.json({ user: updatedUser }, 200);
@@ -121,7 +121,7 @@ router
     c.json(data, 200);
   })
   .put('/change-password', auth, zValidator('json', changePasswordDto), async (c) => {
-    const user = c.get('user') as UserDocument;
+    const user = c.get('user') as PrismaModels['users'];
     const body = c.req.valid('json');
     await AuthService.changePassword(body, user);
     c.json(
@@ -133,7 +133,7 @@ router
   })
   .put('/logout', auth, async (c) => {
     deleteCookie(c, 'refreshToken');
-    const user = c.get('user') as UserDocument;
+    const user = c.get('user') as PrismaModels['users'];
     await AuthService.logout(user);
     c.json(
       {

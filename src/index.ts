@@ -5,14 +5,10 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import mongoose from 'mongoose';
 import { errorFilter } from './middlewares/error-filter';
-import { MONGO_URI } from './utils/constants';
 
 const bootstrap = async () => {
   try {
-    console.log('🚀 Connecting to MongoDB');
-
     const app = new Hono().basePath('/api');
 
     app.use('*', logger());
@@ -32,9 +28,6 @@ const bootstrap = async () => {
     });
 
     app.onError(errorFilter);
-
-    await mongoose.connect(MONGO_URI);
-    console.log('🚀 Connected to MongoDB');
     serve(app);
   } catch (error) {
     console.error('Failed to connect to the Mongo server!!');
