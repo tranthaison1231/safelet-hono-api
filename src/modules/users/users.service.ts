@@ -2,13 +2,21 @@ import prisma from '@/utils/prisma';
 import { UserUpdatedDto } from './dto/user-payload.dto';
 
 export class UserService {
-  static async getAll(page = 1, limit = 10) {
+  static async getAll({ page = 1, limit = 10, email, isVerified }) {
     try {
-      const items = await prisma.users.findMany({
+      const items = await prisma.user.findMany({
         skip: (page - 1) * limit,
         take: limit,
+        where: {
+          email: {
+            contains: email,
+          },
+          isVerified: {
+            equals: isVerified,
+          },
+        },
       });
-      const total = await prisma.users.count();
+      const total = await prisma.user.count();
       return {
         items,
         page,
@@ -23,7 +31,7 @@ export class UserService {
 
   static async getBy(id: string) {
     try {
-      const user = await prisma.users.findUnique({
+      const user = await prisma.user.findUnique({
         where: {
           id,
         },
@@ -37,7 +45,7 @@ export class UserService {
 
   static async delete(id: string) {
     try {
-      const user = await prisma.users.delete({
+      const user = await prisma.user.delete({
         where: {
           id,
         },
@@ -50,7 +58,7 @@ export class UserService {
   }
   static async updateBy(id: string, data: UserUpdatedDto) {
     try {
-      const user = await prisma.users.update({
+      const user = await prisma.user.update({
         where: {
           id,
         },

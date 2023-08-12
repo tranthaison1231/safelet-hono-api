@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["fullTextIndex"]
 }
 
 datasource db {
@@ -7,16 +8,46 @@ datasource db {
   url      = env("MONGO_URI")
 }
 
-model users {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
-  firstName String  
-  lastName  String
-  email String @unique
+model User {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  firstName   String
+  lastName    String
+  email       String  @unique
   phoneNumber String
-  password String
-  salt String
-  isVerified Boolean @default(false)
-  avatarURL String?
-  role String @default("user")
+  password    String
+  salt        String
+  isVerified  Boolean @default(false)
+  avatarURL   String?
+  role        String  @default("user")
+  posts       Post[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("users")
 }
 
+model Post {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  slug     String    @unique
+  title    String
+  content  String
+  author   User      @relation(fields: [authorId], references: [id])
+  authorId String    @db.ObjectId
+  comments Comment[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@fulltext([title(sort: Desc), content])
+  @@map("posts")
+}
+
+model Comment {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  content String
+  post    Post   @relation(fields: [postId], references: [id])
+  postId  String @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("comments")
+}

@@ -15,7 +15,7 @@ export const auth = async (c: Context, next: Next) => {
   const jwtSecret = await redisService.get(`jwt-secret:${userID}`);
   try {
     const data = jwt.verify(token, jwtSecret) as { userId: string };
-    const user = await prisma.users.findUnique({
+    const user = await prisma.user.findUnique({
       where: {
         id: data.userId,
       },
