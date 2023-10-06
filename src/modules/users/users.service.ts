@@ -15,8 +15,21 @@ export class UserService {
             equals: isVerified,
           },
         },
+        include: {
+          company: true,
+          country: true,
+        },
       });
-      const total = await prisma.user.count();
+      const total = await prisma.user.count({
+        where: {
+          email: {
+            contains: email,
+          },
+          isVerified: {
+            equals: isVerified,
+          },
+        },
+      });
       return {
         items,
         page,

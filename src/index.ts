@@ -6,6 +6,8 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { errorFilter } from './middlewares/error-filter';
+import { countries } from './modules/countries/countries.controller';
+import { companies } from './modules/companies/companies.controller';
 
 const bootstrap = async () => {
   try {
@@ -21,6 +23,8 @@ const bootstrap = async () => {
     );
     app.route('/', auth);
     app.route('/users', users);
+    app.route('/countries', countries);
+    app.route('/companies', companies);
     app.route('/upload', upload);
 
     app.notFound((c) => {

@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["fullTextIndex"]
 }
 
@@ -9,70 +9,96 @@ datasource db {
 }
 
 model User {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   firstName   String
   lastName    String
-  email       String  @unique
-  phoneNumber String
+  email       String   @unique
+  phoneNumber String?
   password    String
   salt        String
-  isVerified  Boolean @default(false)
+  isVerified  Boolean  @default(false)
   avatarURL   String?
-  roles       Role[] @relation(fields: [roleIDs], references: [id])
+  roles       Role[]   @relation(fields: [roleIDs], references: [id])
   roleIDs     String[] @db.ObjectId
   posts       Post[]
-  createdAt   DateTime @default(now())
+  createdAt   DateTime? @default(now())
   updatedAt   DateTime @updatedAt
+  country     Country?  @relation(fields: [countryID], references: [id])
+  countryID   String?   @db.ObjectId
+  company     Company?  @relation(fields: [companyID], references: [id])
+  companyID   String?   @db.ObjectId
 
   @@map("users")
 }
 
-
 model Role {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  name        String  @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  permissionIDs String[]  @db.ObjectId
-  permissions Permission[] @relation(fields: [permissionIDs], references: [id])
-  users       User[] @relation(fields: [usersIDs], references: [id])
-  usersIDs    String[] @db.ObjectId
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  name          String       @unique
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  permissionIDs String[]     @db.ObjectId
+  permissions   Permission[] @relation(fields: [permissionIDs], references: [id])
+  users         User[]       @relation(fields: [usersIDs], references: [id])
+  usersIDs      String[]     @db.ObjectId
 
   @@map("roles")
 }
 
 model Permission {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  name        String  @unique
-  roles       String[] @db.ObjectId
-  rolesIDs    Role[]  @relation(fields: [roles], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  roles     String[] @db.ObjectId
+  rolesIDs  Role[]   @relation(fields: [roles], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("permissions")
 }
 
 model Post {
-  id       String    @id @default(auto()) @map("_id") @db.ObjectId
-  slug     String    @unique
-  title    String
-  content  String
-  author   User      @relation(fields: [authorId], references: [id])
-  authorId String    @db.ObjectId
-  comments Comment[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  slug      String    @unique
+  title     String
+  content   String
+  author    User      @relation(fields: [authorId], references: [id])
+  authorId  String    @db.ObjectId
+  comments  Comment[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@fulltext([title(sort: Desc), content])
   @@map("posts")
 }
 
 model Comment {
-  id      String @id @default(auto()) @map("_id") @db.ObjectId
-  content String
-  post    Post   @relation(fields: [postId], references: [id])
-  postId  String @db.ObjectId
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("comments")
+}
+
+model Country {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  code      String   @unique
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User[]
+
+  @@map("countries")
+}
+
+model Company {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  logo      String
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  User      User[] 
+
+  @@map("companies")
 }
