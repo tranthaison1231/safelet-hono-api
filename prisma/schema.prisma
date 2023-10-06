@@ -3,6 +3,10 @@ generator client {
   previewFeatures = ["fullTextIndex"]
 }
 
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
+
 datasource db {
   provider = "mongodb"
   url      = env("MONGO_URI")

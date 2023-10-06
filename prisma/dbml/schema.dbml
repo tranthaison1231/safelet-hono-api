@@ -1,0 +1,99 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table users {
+  id String [pk]
+  firstName String [not null]
+  lastName String [not null]
+  email String [unique, not null]
+  phoneNumber String
+  password String [not null]
+  salt String [not null]
+  isVerified Boolean [not null, default: false]
+  avatarURL String
+  roles roles [not null]
+  roleIDs String[] [not null]
+  posts posts [not null]
+  createdAt DateTime [default: `now()`]
+  updatedAt DateTime [not null]
+  country countries
+  countryID String
+  company companies
+  companyID String
+}
+
+Table roles {
+  id String [pk]
+  name String [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  permissionIDs String[] [not null]
+  permissions permissions [not null]
+  users users [not null]
+  usersIDs String[] [not null]
+}
+
+Table permissions {
+  id String [pk]
+  name String [unique, not null]
+  roles String[] [not null]
+  rolesIDs roles [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table posts {
+  id String [pk]
+  slug String [unique, not null]
+  title String [not null]
+  content String [not null]
+  author users [not null]
+  authorId String [not null]
+  comments comments [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table comments {
+  id String [pk]
+  content String [not null]
+  post posts [not null]
+  postId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table countries {
+  id String [pk]
+  code String [unique, not null]
+  name String [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User users [not null]
+}
+
+Table companies {
+  id String [pk]
+  name String [unique, not null]
+  logo String [not null]
+  updatedAt DateTime [not null]
+  createdAt DateTime [default: `now()`, not null]
+  User users [not null]
+}
+
+Ref: users.roleIDs > roles.id
+
+Ref: users.countryID > countries.id
+
+Ref: users.companyID > companies.id
+
+Ref: roles.permissionIDs > permissions.id
+
+Ref: roles.usersIDs > users.id
+
+Ref: permissions.roles > roles.id
+
+Ref: posts.authorId > users.id
+
+Ref: comments.postId > posts.id
