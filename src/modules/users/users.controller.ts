@@ -1,16 +1,15 @@
 import { auth } from '@/middlewares/auth';
-import { role } from '@/middlewares/role';
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { UserService } from './users.service';
-import { validator } from 'hono/validator';
+import { userUpdatedDto } from './dto/user-payload.dto';
 
 export const users = new Hono();
 
 users.get(
   '/',
-  // auth,
+  auth,
   // role(['admin']),
   zValidator(
     'query',
@@ -60,4 +59,11 @@ users.get('/:id', auth, async (c) => {
     );
   }
   return c.json(data, 200);
+});
+
+users.put('/:id', auth, zValidator('json', userUpdatedDto), async (c) => {
+  const id = c.req.param('id');
+  const data = c.req.valid('json');
+  const user = await UserService.updateBy(id, data);
+  return c.json(user, 200);
 });

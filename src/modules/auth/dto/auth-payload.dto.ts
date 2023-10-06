@@ -45,7 +45,7 @@ export const signInDto = z.object({
     .min(4),
 });
 
-export type SignInDto = Required<z.infer<typeof signInDto>>;
+export type SignInDto = z.infer<typeof signInDto>;
 
 export const forgotPasswordDto = z.object({
   email: z

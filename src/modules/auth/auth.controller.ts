@@ -49,8 +49,8 @@ router
       200
     );
   })
-  .post('/sign-in', zValidator('json', signInDto), async (c: Context) => {
-    const body = c.req.valid('json');
+  .post('/sign-in', zValidator('json', signInDto), async (c) => {
+    const body = c.req.valid("json");
     const data = await AuthService.signIn(body);
     setCookie(c, 'refreshToken', data.refreshToken, {
       maxAge: REFRESH_TOKEN_EXPIRE_IN * 1000,

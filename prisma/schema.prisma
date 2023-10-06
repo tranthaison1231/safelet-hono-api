@@ -18,12 +18,37 @@ model User {
   salt        String
   isVerified  Boolean @default(false)
   avatarURL   String?
-  role        String  @default("user")
+  roles       Role[] @relation(fields: [roleIDs], references: [id])
+  roleIDs     String[] @db.ObjectId
   posts       Post[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@map("users")
+}
+
+
+model Role {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  permissionIDs String[]  @db.ObjectId
+  permissions Permission[] @relation(fields: [permissionIDs], references: [id])
+  users       User[] @relation(fields: [usersIDs], references: [id])
+  usersIDs    String[] @db.ObjectId
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String  @unique
+  roles       String[] @db.ObjectId
+  rolesIDs    Role[]  @relation(fields: [roles], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@map("permissions")
 }
 
 model Post {
