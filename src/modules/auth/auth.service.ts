@@ -17,7 +17,7 @@ import {
   UpdateProfileDto,
 } from './dto/auth-payload.dto';
 
-export const ACCESS_TOKEN_EXPIRE_IN = 60;
+export const ACCESS_TOKEN_EXPIRE_IN = 60 * 60;
 export const REFRESH_TOKEN_EXPIRE_IN = 60 * 60 * 24 * 30;
 
 export class AuthService {
