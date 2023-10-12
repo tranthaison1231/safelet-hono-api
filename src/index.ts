@@ -14,6 +14,7 @@ const bootstrap = async () => {
     const app = new Hono().basePath('/api');
 
     app.use(
+      '*',
       cors({
         origin: '*',
         credentials: true,
