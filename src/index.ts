@@ -13,6 +13,12 @@ const bootstrap = async () => {
   try {
     const app = new Hono().basePath('/api');
 
+    app.use(
+      cors({
+        origin: '*',
+      })
+    );
+
     app.use('*', logger());
     app.use(
       '*',
