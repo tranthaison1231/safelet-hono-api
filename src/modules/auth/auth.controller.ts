@@ -1,7 +1,10 @@
 import { auth } from '@/middlewares/auth';
+import { UnauthorizedException } from '@/utils/exceptions';
+import { PrismaModels } from '@/utils/prisma';
 import { zValidator } from '@hono/zod-validator';
-import { Context, Hono } from 'hono';
-import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
+import { Hono } from 'hono';
+import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
+import jwt from 'jsonwebtoken';
 import { AuthService, REFRESH_TOKEN_EXPIRE_IN } from './auth.service';
 import {
   changePasswordDto,
@@ -12,9 +15,6 @@ import {
   signUpDto,
   updateProfileDto,
 } from './dto/auth-payload.dto';
-import { UnauthorizedException } from '@/utils/exceptions';
-import jwt from 'jsonwebtoken';
-import { PrismaModels } from '@/utils/prisma';
 
 export const router = new Hono();
 
@@ -50,7 +50,7 @@ router
     );
   })
   .post('/sign-in', zValidator('json', signInDto), async (c) => {
-    const body = c.req.valid("json");
+    const body = c.req.valid('json');
     const data = await AuthService.signIn(body);
     setCookie(c, 'refreshToken', data.refreshToken, {
       maxAge: REFRESH_TOKEN_EXPIRE_IN * 1000,
@@ -95,7 +95,7 @@ router
   })
   .get('/profile', auth, async (c) => {
     const user = c.get('user');
-    c.json({ user: user }, 200);
+    return c.json({ user: user }, 200);
   })
   .put('/profile', auth, zValidator('json', updateProfileDto), async (c) => {
     const user = c.get('user') as PrismaModels['User'];

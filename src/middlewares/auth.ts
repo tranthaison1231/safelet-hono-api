@@ -14,7 +14,7 @@ export const auth = async (c: Context, next: Next) => {
   const userID = jwtObject?.userId;
   const jwtSecret = await redisService.get(`jwt-secret:${userID}`);
   try {
-    if(!jwtSecret) {
+    if (!jwtSecret) {
       throw new UnauthorizedException('Unauthorized');
     }
     const data = jwt.verify(token, jwtSecret) as { userId: string };
