@@ -15,7 +15,8 @@ const bootstrap = async () => {
 
     app.use(
       cors({
-        origin: '*',
+        origin: true,
+        credentials: true,
       })
     );
 
