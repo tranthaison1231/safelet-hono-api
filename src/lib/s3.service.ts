@@ -49,7 +49,7 @@ class S3Service {
 
       return {
         uploadUrl,
-        url: `https://${AWS_BUCKET_NAME}.s3.amazonaws.com/${key}`,
+        url: `https://${AWS_BUCKET_NAME}.${AWS_REGION}s3.amazonaws.com/${key}`,
       };
     } catch (error) {
       console.error('Error getting file with S3: ', error);
