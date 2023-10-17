@@ -41,7 +41,7 @@ class S3Service {
         Key: key,
         Bucket: AWS_BUCKET_NAME,
         ContentType: type,
-        ACL: 'public-read',
+        ACL: 'bucket-owner-full-control',
       });
       const uploadUrl = await getSignedUrl(this.s3, command, {
         expiresIn: 3600,
