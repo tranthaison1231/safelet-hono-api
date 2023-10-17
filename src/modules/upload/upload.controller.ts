@@ -8,5 +8,5 @@ export const router = new Hono();
 router.post('/presigned-url', zValidator('json', getPresignedUrlDto), async (c) => {
   const body = c.req.valid('json');
   const data = await s3Service.presignedUrlS3(body);
-  c.json(data, 201);
+  return c.json(data, 201);
 });
