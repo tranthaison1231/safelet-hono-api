@@ -85,6 +85,9 @@ companies
       },
     });
   })
+  .post('/import-excel', auth, async (c) => {
+    return c.json({ message: 'ok' }, 200);
+  })
   .delete('/:id', auth, async (c) => {
     const id = c.req.param('id');
     const data = await CompanyService.delete(id);

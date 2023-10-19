@@ -93,4 +93,18 @@ export class CompanyService {
       throw error;
     }
   }
+
+  static async importExcel(req) {
+    try {
+      const items = await prisma.company.findMany();
+      const parser = new Parser({
+        fields: ['id', 'name', 'logo', 'updatedAt', 'createdAt'],
+      });
+      const data = parser.parse(items);
+      return data;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 }
