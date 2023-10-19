@@ -1,4 +1,5 @@
 import prisma from '@/utils/prisma';
+import { Parser } from '@json2csv/plainjs';
 
 export class CompanyService {
   static async getAll({ page = 1, limit = 10, q }) {
@@ -68,6 +69,25 @@ export class CompanyService {
           id,
         },
       });
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  static async exportExcel() {
+    try {
+      const items = await prisma.company.findMany();
+      const filename = 'companies';
+      const fields = ['id', 'name', 'logo', 'updatedAt', 'createdAt'];
+      const parser = new Parser({
+        fields,
+      });
+      const data = parser.parse(items);
+      return {
+        filename,
+        data,
+      };
     } catch (error) {
       console.error(error);
       throw error;

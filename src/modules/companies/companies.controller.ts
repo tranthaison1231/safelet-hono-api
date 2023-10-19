@@ -4,7 +4,6 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { CompanyService } from './companies.service';
 
-
 export const companies = new Hono();
 
 companies
@@ -76,13 +75,18 @@ companies
       });
       return c.json(data, 200);
     }
-  ).delete(
-    '/:id',
-    auth,
-    async (c) => {
-      const id = c.req.param('id');
-      const data = await CompanyService.delete(id);
-      return c.json(data, 200);
-    }
-  );
-
+  )
+  .get('/export-excel', auth, async () => {
+    const { data, filename } = await CompanyService.exportExcel();
+    return new Response(data, {
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': ['attachment; filename=', filename, '.csv'].join(''),
+      },
+    });
+  })
+  .delete('/:id', auth, async (c) => {
+    const id = c.req.param('id');
+    const data = await CompanyService.delete(id);
+    return c.json(data, 200);
+  });
