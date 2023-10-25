@@ -1,5 +1,7 @@
+import { csvToJson } from '@/utils/csvToJson';
 import prisma from '@/utils/prisma';
 import { Parser } from '@json2csv/plainjs';
+import { Prisma } from '@prisma/client';
 
 export class CompanyService {
   static async getAll({ page = 1, limit = 10, q }) {
@@ -94,14 +96,16 @@ export class CompanyService {
     }
   }
 
-  static async importExcel(req) {
+  static async importExcel(buffer: ArrayBuffer) {
     try {
-      const items = await prisma.company.findMany();
-      const parser = new Parser({
-        fields: ['id', 'name', 'logo', 'updatedAt', 'createdAt'],
+      const csvString = Buffer.from(buffer).toString();
+      const companies = csvToJson<Prisma.CompanyCreateManyInput>(csvString);
+      const items = await prisma.$runCommandRaw({
+        insert: 'companies',
+        ordered: false,
+        documents: companies.map(({ id, ...company }) => company),
       });
-      const data = parser.parse(items);
-      return data;
+      return items;
     } catch (error) {
       console.error(error);
       throw error;

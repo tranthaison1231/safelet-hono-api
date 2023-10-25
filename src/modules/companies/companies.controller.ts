@@ -86,7 +86,10 @@ companies
     });
   })
   .post('/import-excel', auth, async (c) => {
-    return c.json({ message: 'ok' }, 200);
+    const { file } = await c.req.parseBody();
+    const buffer = await (file as File).arrayBuffer();
+    const data = await CompanyService.importExcel(buffer);
+    return c.json(data, 201);
   })
   .delete('/:id', auth, async (c) => {
     const id = c.req.param('id');

@@ -1,13 +1,10 @@
+import { companies } from './../src/modules/companies/companies.controller';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function run() {
-  const companies = await prisma.user.updateMany({
-    data: {
-      companyID: '651fc43f2b5306887a2c71ab',
-    },
-  });
+  const companies = await prisma.company.deleteMany({});
   console.log({ companies });
 }
 
